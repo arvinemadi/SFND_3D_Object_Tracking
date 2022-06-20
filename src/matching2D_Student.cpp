@@ -1,7 +1,7 @@
-
+/* Code completed by Arvin.Emadi@Gmail.com*/
+/* Incomplete base code from Udacity - link at the readme*/
 #include <numeric>
 #include "matching2D.hpp"
-
 using namespace std;
 
 // Find best matches for keypoints in two camera images based on several matching methods
@@ -62,36 +62,29 @@ void descKeypoints(vector<cv::KeyPoint> &keypoints, cv::Mat &img, cv::Mat &descr
 
     if (descriptorType.compare("BRISK") == 0)
     {
-
         int threshold = 30;        // FAST/AGAST detection threshold score.
         int octaves = 3;           // detection octaves (use 0 to do single scale)
         float patternScale = 1.0f; // apply this scale to the pattern used for sampling the neighbourhood of a keypoint.
-
         extractor = cv::BRISK::create(threshold, octaves, patternScale);
     }
     else if (descriptorType.compare("BRIEF") == 0)
     {
-
         extractor = cv::xfeatures2d::BriefDescriptorExtractor::create();
     }
     else if (descriptorType.compare("ORB") == 0)
     {
-
         extractor = cv::ORB::create();
     }
     else if (descriptorType.compare("FREAK") == 0)
     {
-
         extractor = cv::xfeatures2d::FREAK::create();
     }
     else if (descriptorType.compare("AKAZE") == 0)
     {
         extractor = cv::AKAZE::create();
-        //extractor = cv::KAZE::create(cv::AKAZE::DESCRIPTOR_MLDB, 0, 1, 0.001f, 3, 3, cv::KAZE::DIFF_PM_G2);
     }
     else if (descriptorType.compare("SIFT") == 0)
     {
-
         extractor = cv::xfeatures2d::SIFT::create();
     }
 
@@ -110,7 +103,6 @@ void detKeypointsShiTomasi(vector<cv::KeyPoint> &keypoints, cv::Mat &img, bool b
     double maxOverlap = 0.0; // max. permissible overlap between two features in %
     double minDistance = (1.0 - maxOverlap) * blockSize;
     int maxCorners = img.rows * img.cols / max(1.0, minDistance); // max. num. of keypoints
-
     double qualityLevel = 0.01; // minimal accepted quality of image corners
     double k = 0.04;
 
@@ -122,7 +114,6 @@ void detKeypointsShiTomasi(vector<cv::KeyPoint> &keypoints, cv::Mat &img, bool b
     // add corners to result vector
     for (auto it = corners.begin(); it != corners.end(); ++it)
     {
-
         cv::KeyPoint newKeyPoint;
         newKeyPoint.pt = cv::Point2f((*it).x, (*it).y);
         newKeyPoint.size = blockSize;
@@ -152,25 +143,16 @@ void detKeypointsHarris(vector<cv::KeyPoint> &keypoints, cv::Mat &img, bool bVis
     int apertureSize = 3;
     int minResponse = 100;
     double maxOverlap = 0.0; // max. permissible overlap between two features in %
-    //double minDistance = (1.0 - maxOverlap) * blockSize;
-    //int maxCorners = img.rows * img.cols / max(1.0, minDistance); // max. num. of keypoints
-
-    //double qualityLevel = 0.01; // minimal accepted quality of image corners
     double k = 0.04;
 
     // Apply corner detection
     double t = (double)cv::getTickCount();
     vector<cv::Point2f> corners;
-
     cv::Mat dst, dst_norm, dst_norm_scaled;
     dst = cv::Mat::zeros(img.size(), CV_32FC1);
     cv::cornerHarris(img, dst, blockSize, apertureSize, k, cv::BORDER_DEFAULT);
     cv::normalize(dst, dst_norm, 0, 255, cv::NORM_MINMAX, CV_32FC1, cv::Mat());
     cv::convertScaleAbs(dst_norm, dst_norm_scaled);
-
-    
-    
-    //cv::goodFeaturesToTrack(img, corners, maxCorners, qualityLevel, minDistance, cv::Mat(), blockSize, false, k);
 
     // add corners to result vector
     for(int j = 0; j < dst_norm.rows; j++)
@@ -224,8 +206,6 @@ void detKeypointsHarris(vector<cv::KeyPoint> &keypoints, cv::Mat &img, bool bVis
 
 void detKeypointsModern(std::vector<cv::KeyPoint> &keypoints, cv::Mat &img, std::string detectorType, bool bVis)
 {
-    
-    
     cv::Ptr<cv::FeatureDetector> detector;
     double t = (double)cv::getTickCount();
 
@@ -273,10 +253,8 @@ void detKeypointsModern(std::vector<cv::KeyPoint> &keypoints, cv::Mat &img, std:
         detector = cv::xfeatures2d::SIFT::create();
         detector -> detect(img, keypoints); 
     }
-
     t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
     cout << detectorType << " detection with n=" << keypoints.size() << " keypoints in " << 1000 * t / 1.0 << " ms" << endl;
-
 
     // visualize results
     if (bVis)

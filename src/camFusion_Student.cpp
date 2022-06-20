@@ -1,4 +1,5 @@
-
+/* Code completed by Arvin.Emadi@Gmail.com*/
+/* Incomplete base code from Udacity - link at the readme*/
 #include <iostream>
 #include <algorithm>
 #include <numeric>
@@ -9,7 +10,6 @@
 #include "dataStructures.h"
 
 using namespace std;
-
 
 // Create groups of Lidar points whose projection into the camera falls into the same bounding box
 void clusterLidarWithROI(std::vector<BoundingBox> &boundingBoxes, std::vector<LidarPoint> &lidarPoints, float shrinkFactor, cv::Mat &P_rect_xx, cv::Mat &R_rect_xx, cv::Mat &RT)
@@ -57,7 +57,6 @@ void clusterLidarWithROI(std::vector<BoundingBox> &boundingBoxes, std::vector<Li
             // add Lidar point to bounding box
             enclosingBoxes[0]->lidarPoints.push_back(*it1);
         }
-
     } // eof loop over all Lidar points
 }
 
@@ -223,15 +222,14 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
         TTC = NAN;
         return;
     }
-    // STUDENT TASK (replacement for meanDistRatio)
+    // Replaced mean calculations with median for more robust performane
     std::sort(filtered_distRatios.begin(), filtered_distRatios.end());
     long medIndex = floor(filtered_distRatios.size() / 2.0);
     double medDistRatio = filtered_distRatios.size() % 2 == 0 ? (filtered_distRatios[medIndex - 1] + filtered_distRatios[medIndex]) / 2.0 : filtered_distRatios[medIndex]; // compute median dist. ratio to remove outlier influence
     cout << "Median disRatio is " << medDistRatio << endl;
     double dT = 1 / frameRate;
     TTC = -dT / (1 - medDistRatio);
-    // EOF STUDENT TASK
-}
+ }
 
 
 void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,

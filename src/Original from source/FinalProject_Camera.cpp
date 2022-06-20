@@ -26,23 +26,9 @@ using namespace std;
 int main(int argc, const char *argv[])
 {
     /* INIT VARIABLES AND DATA STRUCTURES */
-    vector<double> cameraTTC_arr;
-    vector<double> lidarTTC_arr;
-    
 
     // data location
     string dataPath = "../";
-    string my_detector = "";
-    string my_descriptor = "";
-    
-    if(argc > 1)
-        my_detector.append(argv[1]);
-    if(argc > 2)
-        my_descriptor.append(argv[2]);
-    
-    cout << "Detector selected : " << my_detector << endl;
-    cout << "Descriptor selected : " << my_descriptor << endl;
-    
 
     // camera
     string imgBasePath = dataPath + "images/";
@@ -143,10 +129,10 @@ int main(int argc, const char *argv[])
         clusterLidarWithROI((dataBuffer.end()-1)->boundingBoxes, (dataBuffer.end() - 1)->lidarPoints, shrinkFactor, P_rect_00, R_rect_00, RT);
 
         // Visualize 3D objects
-        bVis = false;
+        bVis = true;
         if(bVis)
         {
-            show3DObjects((dataBuffer.end()-1)->boundingBoxes, cv::Size(4.0, 20.0), cv::Size(700, 700), true);
+            show3DObjects((dataBuffer.end()-1)->boundingBoxes, cv::Size(4.0, 20.0), cv::Size(2000, 2000), true);
         }
         bVis = false;
 
@@ -154,7 +140,7 @@ int main(int argc, const char *argv[])
         
         
         // REMOVE THIS LINE BEFORE PROCEEDING WITH THE FINAL PROJECT
-        //continue; // skips directly to the next image without processing what comes beneath
+        continue; // skips directly to the next image without processing what comes beneath
 
         /* DETECT IMAGE KEYPOINTS */
 
@@ -164,23 +150,15 @@ int main(int argc, const char *argv[])
 
         // extract 2D keypoints from current image
         vector<cv::KeyPoint> keypoints; // create empty feature list for current image
+        string detectorType = "SHITOMASI";
 
-        string detectorType = my_detector.size() > 0 ? my_detector : "SIFT";
-        my_detector = detectorType;
-
-        cout << "Using Detector : " << detectorType << endl;
-    
         if (detectorType.compare("SHITOMASI") == 0)
         {
             detKeypointsShiTomasi(keypoints, imgGray, false);
         }
-        else if (detectorType.compare("HARRIS") == 0)
+        else
         {
-            detKeypointsHarris(keypoints, imgGray, false);
-        }
-        else 
-        {
-            detKeypointsModern(keypoints, imgGray, detectorType,false);
+            //...
         }
 
         // optional : limit number of keypoints (helpful for debugging and learning)
@@ -206,9 +184,7 @@ int main(int argc, const char *argv[])
         /* EXTRACT KEYPOINT DESCRIPTORS */
 
         cv::Mat descriptors;
-        string descriptorType = my_descriptor.size() > 0 ? my_descriptor : "BRISK"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT
-        my_descriptor  = descriptorType;
-        cout << "Using Descriptor  : " << descriptorType << endl;
+        string descriptorType = "BRISK"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT
         descKeypoints((dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->cameraImg, descriptors, descriptorType);
 
         // push descriptors for current frame to end of data buffer
@@ -225,11 +201,8 @@ int main(int argc, const char *argv[])
             vector<cv::DMatch> matches;
             string matcherType = "MAT_BF";        // MAT_BF, MAT_FLANN
             string descriptorType = "DES_BINARY"; // DES_BINARY, DES_HOG
-            string selectorType = "SEL_KNN";       // SEL_NN, SEL_KNN
-            if (my_descriptor.compare("SIFT")==0 || my_descriptor.compare("AKAZE")==0)
-            {
-                descriptorType = "DES_HOG"; // non-binary descriptors
-            }
+            string selectorType = "SEL_NN";       // SEL_NN, SEL_KNN
+
             matchDescriptors((dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints,
                              (dataBuffer.end() - 2)->descriptors, (dataBuffer.end() - 1)->descriptors,
                              matches, descriptorType, matcherType, selectorType);
@@ -250,7 +223,6 @@ int main(int argc, const char *argv[])
 
             // store matches in current data frame
             (dataBuffer.end()-1)->bbMatches = bbBestMatches;
-            cout << bbBestMatches.size() << endl;
 
             cout << "#8 : TRACK 3D OBJECT BOUNDING BOXES done" << endl;
 
@@ -284,10 +256,7 @@ int main(int argc, const char *argv[])
                     //// STUDENT ASSIGNMENT
                     //// TASK FP.2 -> compute time-to-collision based on Lidar data (implement -> computeTTCLidar)
                     double ttcLidar; 
-                    cout << "Calling compute TTCLidar" << endl;
                     computeTTCLidar(prevBB->lidarPoints, currBB->lidarPoints, sensorFrameRate, ttcLidar);
-                    cout << "Lidar TTC computed to be " << ttcLidar << endl;
-                    lidarTTC_arr.push_back(ttcLidar);
                     //// EOF STUDENT ASSIGNMENT
 
                     //// STUDENT ASSIGNMENT
@@ -296,11 +265,9 @@ int main(int argc, const char *argv[])
                     double ttcCamera;
                     clusterKptMatchesWithROI(*currBB, (dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->kptMatches);                    
                     computeTTCCamera((dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints, currBB->kptMatches, sensorFrameRate, ttcCamera);
-                    cout << "Camera TTC computed to be " << ttcCamera << endl;
-                    cameraTTC_arr.push_back(ttcCamera);
                     //// EOF STUDENT ASSIGNMENT
 
-                    bVis = false;
+                    bVis = true;
                     if (bVis)
                     {
                         cv::Mat visImg = (dataBuffer.end() - 1)->cameraImg.clone();
@@ -309,7 +276,7 @@ int main(int argc, const char *argv[])
                         
                         char str[200];
                         sprintf(str, "TTC Lidar : %f s, TTC Camera : %f s", ttcLidar, ttcCamera);
-                        putText(visImg, str, cv::Point2f(80, 50), cv::FONT_HERSHEY_PLAIN, 1.0, cv::Scalar(0,0,255));
+                        putText(visImg, str, cv::Point2f(80, 50), cv::FONT_HERSHEY_PLAIN, 2, cv::Scalar(0,0,255));
 
                         string windowName = "Final Results : TTC";
                         cv::namedWindow(windowName, 4);
@@ -325,24 +292,6 @@ int main(int argc, const char *argv[])
         }
 
     } // eof loop over all images
-    string filename = "output.txt";
-    fstream fout;
-    fout.open(filename, std::ios_base::app | std::ios_base::in);
-    
-    cout<<"Lidar output:"<<endl;
-    fout<<"Lidar output:"<<endl;
-    for(auto& d : lidarTTC_arr)
-    {
-        cout << d << endl;
-        fout << d << endl;
-    }
-    cout << "Camera output for detector : "<< my_detector << " and descriptor : " << my_descriptor << endl;
-    fout << "Camera output for detector : "<< my_detector << " and descriptor : " << my_descriptor << endl;
-    for(auto& d : cameraTTC_arr)
-    {
-        cout << d << endl;  
-        fout << d << endl;
-    }
-        
+
     return 0;
 }

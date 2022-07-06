@@ -1,14 +1,36 @@
-# SFND 3D Object Tracking
+# SFND 3D Object Tracking - COMPLETED PROJECT
 
-Welcome to the final project of the camera course. By completing all the lessons, you now have a solid understanding of keypoint detectors, descriptors, and methods to match them between successive images. Also, you know how to detect objects in an image using the YOLO deep-learning framework. And finally, you know how to associate regions in a camera image with Lidar points in 3D space. Let's take a look at our program schematic to see what we already have accomplished and what's still missing.
+The goal of this project is to use Lidar and Camera data to estimate in a timed series of images and calculate the relative speed to the closest car in the front. After calculating the speed, time to collision with that car can be also calculated.
+
+Lidar approach:
+Using the Lidar data, closest distance to the car in the from is calculated. Sometimes a single closest point is not so reliable and some tricks need to be used for example to account for blooming or dust random pixels that can occuer.
+One way to do this, is to select a closest point if there are other points in the tolerance of that point. Lidar may be in general more reliable for distance calculations that camera but it is more expensive and not always available.
+
+Camera:
+To calculate the distance of the car in the front, some geometrical calculations need to be done.
+- Translating the co-ordinates of the points as measured by the camera to the defined co-ordinates of the car (that could be defined to be from Lidar sensor for example)
+- Using YOLO to put bounding boxes around the objects of interest. [Link](https://towardsdatascience.com/yolo-you-only-look-once-real-time-object-detection-explained-492dc9230006) YOLO is available as a pre-trained deep NN in the openCV library.
+- Between every two consecutiveframes the same points are extracted (General concept below) This makes it certain that between two frame the same shape or length changes dimensions in the 2D space of the camera. Using this information and the time that has passed between the two frames the change in the z- direction (direction of the car movement) can be calculated that can be directly translate to the relative speed.
+- KeyPoint and KeyPoint descriptors extraction:
+-- Keypoints are points that have special characteristics based on their neighbourhood. This makes them distinctive and make it possible to detect them repeatedly despite changes in image scaling, illumination noise, and orientation. The are several keypoint detection algorithms, some are based on gradient change in the area of a pixel (corners) some are based on blob detection, and there are techniques using deep NN. A simple comparison between most used techniques is shown below:
+-- Descriptors record the neighboorhood characteristics of a keypoint. There are generally two approaches. History of gradient (HOG) and Binary descriptors. In binary descriptors the magnitude, direction of intensity, etc are encoded into a binary string and enables fast comparison of keypoints between images.
+- Keypoints matching:
+Using the keypoints and descriptors of two consecutive frames. Keypoints descriptors are compared and only the keypoints where their descriptors match are kept. Several filtering techniques are used to ensure higher reliability. Between all the matched keypoint pairs distances are calculated and averaged to estimate the change in the z- direction.
+<img src="images/Table_Detector_Descriptor.PNG" width="779" height="414" />
+
+Codes completed in this project: FinalProject_Camera.cpp, camFusion_Student,cpp, dataStructures.h, lidarData.cpp, matching2D_Student.cpp
+Detailed flow chat of all the steps that are implemented in these code files:
 
 <img src="images/course_code_structure.png" width="779" height="414" />
 
-In this final project, you will implement the missing parts in the schematic. To do this, you will complete four major tasks: 
-1. First, you will develop a way to match 3D objects over time by using keypoint correspondences. 
-2. Second, you will compute the TTC based on Lidar measurements. 
-3. You will then proceed to do the same using the camera, which requires to first associate keypoint matches to regions of interest and then to compute the TTC based on those matches. 
-4. And lastly, you will conduct various tests with the framework. Your goal is to identify the most suitable detector/descriptor combination for TTC estimation and also to search for problems that can lead to faulty measurements by the camera or Lidar sensor. In the last course of this Nanodegree, you will learn about the Kalman filter, which is a great way to combine the two independent TTC measurements into an improved version which is much more reliable than a single sensor alone can be. But before we think about such things, let us focus on your final project in the camera course. 
+---
+## References:
+- https://www.cs.utah.edu/~srikumar/cv_spring2017_files/Keypoints&Descriptors.pdf
+- http://bth.diva-portal.org/smash/get/diva2:1544922/FULLTEXT01.pdf
+
+
+---
+Local installation:
 
 ## Dependencies for Running Locally
 * cmake >= 2.8
@@ -32,5 +54,6 @@ In this final project, you will implement the missing parts in the schematic. To
 
 1. Clone this repo.
 2. Make a build directory in the top level project directory: `mkdir build && cd build`
-3. Compile: `cmake .. && make`
-4. Run it: `./3D_object_tracking`.
+3. Compile: `cmake .. 
+4. Open in Visual Studio to compile
+
